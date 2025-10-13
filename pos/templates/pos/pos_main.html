@@ -1,0 +1,512 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>POS - Punto de Venta</title>
+    <script src="https://unpkg.com/htmx.org@1.9.10"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .pos-container {
+            max-width: 1000px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            padding: 20px;
+        }
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #eee;
+        }
+        .session-info {
+            background: #e7f3ff;
+            border: 1px solid #b3d9ff;
+            border-radius: 4px;
+            padding: 10px 15px;
+            margin-bottom: 20px;
+        }
+        .session-info.active {
+            background: #d4edda;
+            border-color: #c3e6cb;
+        }
+        .search-section {
+            margin-bottom: 20px;
+        }
+        .search-input {
+            width: 300px;
+            padding: 10px;
+            font-size: 16px;
+            border: 2px solid #007bff;
+            border-radius: 4px;
+        }
+        .cart-section {
+            margin-top: 20px;
+        }
+        .cart-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 20px;
+        }
+        .cart-table th,
+        .cart-table td {
+            border: 1px solid #ddd;
+            padding: 12px;
+            text-align: left;
+        }
+        .cart-table th {
+            background-color: #f8f9fa;
+            font-weight: bold;
+        }
+        .totals-section {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 4px;
+            margin-bottom: 20px;
+        }
+        .payment-methods {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 15px;
+            flex-wrap: wrap;
+        }
+        .payment-btn {
+            padding: 10px 20px;
+            border: 2px solid #6c757d;
+            border-radius: 4px;
+            background: white;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.3s;
+        }
+        .payment-btn.active {
+            background: #007bff;
+            color: white;
+            border-color: #007bff;
+        }
+        .payment-btn.cash.active {
+            background: #28a745;
+            border-color: #28a745;
+        }
+        .payment-btn.card.active {
+            background: #6f42c1;
+            border-color: #6f42c1;
+        }
+        .checkout-btn {
+            background: #28a745;
+            color: white;
+            padding: 15px 30px;
+            border: none;
+            border-radius: 4px;
+            font-size: 18px;
+            cursor: pointer;
+            transition: background 0.3s;
+            width: 100%;
+        }
+        .checkout-btn:hover:not(:disabled) {
+            background: #218838;
+        }
+        .checkout-btn:disabled {
+            background: #6c757d;
+            cursor: not-allowed;
+        }
+        .action-buttons {
+            display: flex;
+            gap: 10px;
+            margin-top: 15px;
+        }
+        .btn-secondary {
+            background: #6c757d;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            text-decoration: none;
+            display: inline-block;
+            text-align: center;
+            flex: 1;
+        }
+        .btn-secondary:hover {
+            background: #545b62;
+        }
+        .btn-warning {
+            background: #ffc107;
+            color: #212529;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            text-decoration: none;
+            display: inline-block;
+            text-align: center;
+            flex: 1;
+        }
+        .btn-warning:hover {
+            background: #e0a800;
+        }
+        .logout-btn {
+            background: #dc3545;
+            color: white;
+            border: none;
+            padding: 8px 15px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            text-decoration: none;
+            display: inline-block;
+        }
+        .logout-btn:hover {
+            background: #c82333;
+        }
+        .error-message {
+            color: #dc3545;
+            background: #f8d7da;
+            padding: 10px;
+            border-radius: 4px;
+            margin: 10px 0;
+            border: 1px solid #f5c6cb;
+        }
+        .success-message {
+            color: #155724;
+            background: #d4edda;
+            padding: 10px;
+            border-radius: 4px;
+            margin: 10px 0;
+            border: 1px solid #c3e6cb;
+        }
+        .success-row {
+            background-color: #f8fff8;
+        }
+        .loading-indicator {
+            opacity: 0;
+            transition: opacity 0.3s;
+            margin-top: 10px;
+            color: #007bff;
+        }
+        .htmx-request .loading-indicator {
+            opacity: 1;
+        }
+        .cart-count {
+            background: #007bff;
+            color: white;
+            border-radius: 50%;
+            padding: 2px 8px;
+            font-size: 14px;
+            margin-left: 5px;
+        }
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+        .stock-info {
+            font-size: 12px;
+            color: #666;
+            margin-top: 4px;
+        }
+        .low-stock {
+            color: #dc3545;
+            font-weight: bold;
+        }
+        .no-stock {
+            color: #dc3545;
+            font-weight: bold;
+            background: #f8d7da;
+            padding: 2px 6px;
+            border-radius: 3px;
+        }
+        .hidden {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="pos-container">
+        <div class="header">
+            <h1>🛒 Punto de Venta</h1>
+            <div class="user-info">
+                <span>Hola, {{ user.username }}!</span>
+                <a href="{% url 'logout' %}" class="logout-btn">
+                    🚪 Cerrar Sesión
+                </a>
+            </div>
+        </div>
+
+        <!-- Información de Sesión de Caja -->
+        <div class="session-info active">
+            <strong>💰 Sesión Activa</strong> |
+            <span>Fondo Inicial: ${{ active_session.starting_balance|default:"0.00"|floatformat:2 }}</span> |
+            <span>Iniciada: {{ active_session.start_time|date:"H:i" }}</span>
+        </div>
+
+        <!-- Sección de búsqueda de productos -->
+        <div class="search-section">
+            <h3>Buscar Producto por SKU</h3>
+            <input type="text"
+                   class="search-input"
+                   placeholder="Escribe el SKU y presiona ENTER..."
+                   hx-post="{% url 'add_product' %}"
+                   hx-trigger="keyup[key=='Enter']"
+                   hx-target="#cart-items"
+                   hx-swap="beforeend"
+                   hx-indicator="#loading-indicator"
+                   name="sku"
+                   id="sku-input">
+
+            <!-- Indicador de carga -->
+            <div id="loading-indicator" class="loading-indicator">
+                ⏳ Buscando producto...
+            </div>
+        </div>
+
+        <!-- Mensajes del sistema -->
+        <div id="messages">
+            {% if messages %}
+                {% for message in messages %}
+                    <div class="{% if message.tags == 'success' %}success-message{% else %}error-message{% endif %}">
+                        {{ message }}
+                    </div>
+                {% endfor %}
+            {% endif %}
+        </div>
+
+        <!-- Sección del carrito -->
+        <div class="cart-section">
+            <h3>Carrito de Venta
+                {% if cart_items %}
+                    <span class="cart-count">{{ cart_items|length }}</span>
+                {% endif %}
+            </h3>
+
+            <table class="cart-table">
+                <thead>
+                    <tr>
+                        <th>Producto</th>
+                        <th>Precio Unit.</th>
+                        <th>Cantidad</th>
+                        <th>Subtotal</th>
+                    </tr>
+                </thead>
+                <tbody id="cart-items">
+                    {% for item in cart_items %}
+                    <tr class="success-row">
+                        <td>
+                            {{ item.name }} (SKU: {{ item.sku }})
+                            <div class="stock-info">
+                                {% with product=item.product_obj %}
+                                {% if product.stock == 0 %}
+                                    <span class="no-stock">SIN STOCK</span>
+                                {% elif product.stock < 10 %}
+                                    <span class="low-stock">Stock bajo: {{ product.stock }} unidades</span>
+                                {% else %}
+                                    Stock disponible: {{ product.stock }} unidades
+                                {% endif %}
+                                {% endwith %}
+                            </div>
+                        </td>
+                        <td>${{ item.price }}</td>
+                        <td>{{ item.quantity }}</td>
+                        <td>${{ item.subtotal|floatformat:2 }}</td>
+                    </tr>
+                    {% empty %}
+                    <tr id="empty-cart-message">
+                        <td colspan="4" style="text-align: center; color: #6c757d;">
+                            El carrito está vacío. Busca productos por SKU.
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+
+            <!-- Totales -->
+            <div class="totals-section">
+                <h4>Total: $<span id="total-amount">{{ total|floatformat:2 }}</span></h4>
+            </div>
+
+            <!-- Métodos de Pago -->
+            <div class="payment-methods">
+                <button type="button" class="payment-btn cash active" data-method="cash">
+                    💵 Efectivo
+                </button>
+                <button type="button" class="payment-btn card" data-method="card">
+                    💳 Tarjeta
+                </button>
+            </div>
+
+            <!-- Formulario de Checkout -->
+            <form method="post" action="{% url 'checkout' %}" id="checkout-form">
+                {% csrf_token %}
+                <input type="hidden" name="payment_method" id="payment-method" value="cash">
+
+                <button type="submit" class="checkout-btn" {% if not cart_items %}disabled{% endif %}>
+                    ✅ Finalizar Venta -
+                    <span id="payment-method-text">EFECTIVO</span>
+                    {% if cart_items %}
+                        ({{ cart_items|length }} productos)
+                    {% else %}
+                        (0 productos)
+                    {% endif %}
+                </button>
+            </form>
+
+            <!-- Botones de Acción -->
+            <div class="action-buttons">
+                <a href="{% url 'close_session' %}" class="btn-warning">
+                    🔒 Cerrar Caja
+                </a>
+                <a href="{% url 'pos_main' %}" class="btn-secondary">
+                    🔄 Limpiar Todo
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Configurar CSRF token para todas las peticiones HTMX
+        document.body.addEventListener('htmx:configRequest', function(event) {
+            event.detail.headers['X-CSRFToken'] = '{{ csrf_token }}';
+        });
+
+        // Función para limpiar el campo de búsqueda después de añadir producto
+        document.addEventListener('htmx:afterRequest', function(event) {
+            if (event.detail.target.id === 'cart-items') {
+                // Limpiar el campo de búsqueda
+                document.getElementById('sku-input').value = '';
+
+                // Ocultar mensaje de carrito vacío si se añadió un producto
+                const emptyMessage = document.getElementById('empty-cart-message');
+                if (emptyMessage) {
+                    emptyMessage.style.display = 'none';
+                }
+
+                // Actualizar el total y contador
+                updateTotalAndCount();
+            }
+        });
+
+        // Función para actualizar el total y contador
+        function updateTotalAndCount() {
+            // Recalcular total basado en los productos en la tabla
+            let total = 0;
+            let itemCount = 0;
+            const rows = document.querySelectorAll('#cart-items tr');
+
+            rows.forEach(row => {
+                const cells = row.querySelectorAll('td');
+                if (cells.length === 4 && !row.id.includes('empty-cart')) {
+                    const subtotalText = cells[3].textContent;
+                    const subtotal = parseFloat(subtotalText.replace('$', '')) || 0;
+                    total += subtotal;
+                    itemCount++;
+                }
+            });
+
+            // Actualizar total
+            document.getElementById('total-amount').textContent = total.toFixed(2);
+
+            // Actualizar botón
+            const checkoutBtn = document.querySelector('.checkout-btn');
+            const cartCount = document.querySelector('.cart-count');
+
+            if (checkoutBtn) {
+                checkoutBtn.disabled = itemCount === 0;
+                const methodText = document.getElementById('payment-method-text').textContent;
+                checkoutBtn.innerHTML = `✅ Finalizar Venta - ${methodText} (${itemCount} productos)`;
+            }
+
+            // Actualizar contador
+            if (cartCount) {
+                cartCount.textContent = itemCount;
+            } else if (itemCount > 0) {
+                // Crear contador si no existe
+                const cartTitle = document.querySelector('.cart-section h3');
+                const newCount = document.createElement('span');
+                newCount.className = 'cart-count';
+                newCount.textContent = itemCount;
+                cartTitle.appendChild(newCount);
+            }
+        }
+
+        // Manejar selección de método de pago
+        document.querySelectorAll('.payment-btn').forEach(btn => {
+            btn.addEventListener('click', function() {
+                // Remover clase active de todos los botones
+                document.querySelectorAll('.payment-btn').forEach(b => {
+                    b.classList.remove('active');
+                });
+
+                // Agregar clase active al botón clickeado
+                this.classList.add('active');
+
+                // Actualizar campo hidden y texto
+                const method = this.dataset.method;
+                document.getElementById('payment-method').value = method;
+
+                // Actualizar texto en botón de checkout
+                const methodText = method === 'cash' ? 'EFECTIVO' : 'TARJETA';
+                document.getElementById('payment-method-text').textContent = methodText;
+
+                // Actualizar texto del botón de checkout
+                const checkoutBtn = document.querySelector('.checkout-btn');
+                if (!checkoutBtn.disabled) {
+                    const itemCount = document.querySelectorAll('#cart-items tr').length - 1; // Restar fila vacía
+                    checkoutBtn.innerHTML = `✅ Finalizar Venta - ${methodText} (${itemCount} productos)`;
+                }
+            });
+        });
+
+        // Confirmación antes de cerrar caja
+        document.querySelector('.btn-warning').addEventListener('click', function(e) {
+            if (!confirm('¿Estás seguro de que quieres cerrar la caja? Esta acción finalizará tu turno.')) {
+                e.preventDefault();
+            }
+        });
+
+        // Limpiar carrito
+        document.querySelector('a[href="{% url 'pos_main' %}"]').addEventListener('click', function(e) {
+            if (document.querySelectorAll('#cart-items tr').length > 1) { // Si hay productos
+                if (!confirm('¿Estás seguro de que quieres limpiar el carrito? Se perderán todos los productos agregados.')) {
+                    e.preventDefault();
+                }
+            }
+        });
+
+        // Llamar al cargar la página
+        document.addEventListener('DOMContentLoaded', updateTotalAndCount);
+
+        // Manejar errores de HTMX
+        document.addEventListener('htmx:responseError', function(event) {
+            console.error('Error en HTMX:', event.detail);
+        });
+
+        // Función para mostrar notificaciones de stock
+        function showStockNotification(message, type = 'error') {
+            const messagesDiv = document.getElementById('messages');
+            const notification = document.createElement('div');
+            notification.className = type === 'error' ? 'error-message' : 'success-message';
+            notification.textContent = message;
+            messagesDiv.appendChild(notification);
+
+            // Auto-remover después de 5 segundos
+            setTimeout(() => {
+                notification.remove();
+            }, 5000);
+        }
+
+        // Auto-enfocar el campo de búsqueda al cargar la página
+        document.addEventListener('DOMContentLoaded', function() {
+            document.getElementById('sku-input').focus();
+        });
+    </script>
+</body>
+</html>

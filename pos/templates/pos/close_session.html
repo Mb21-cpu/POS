@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cierre de Caja - Sistema POS</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f5f5f5;
+            margin: 0;
+            padding: 20px;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            padding: 2rem;
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 2rem;
+            padding-bottom: 1rem;
+            border-bottom: 2px solid #eee;
+        }
+        .summary-section {
+            background: #f8f9fa;
+            padding: 1.5rem;
+            border-radius: 6px;
+            margin-bottom: 2rem;
+        }
+        .summary-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+        }
+        .summary-item {
+            padding: 1rem;
+            background: white;
+            border-radius: 4px;
+            border-left: 4px solid #007bff;
+        }
+        .summary-item h4 {
+            margin: 0 0 0.5rem 0;
+            color: #555;
+            font-size: 0.9rem;
+        }
+        .summary-item .amount {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: #333;
+        }
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+        .form-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            color: #555;
+            font-weight: bold;
+        }
+        .form-group input, .form-group textarea {
+            width: 100%;
+            padding: 10px;
+            border: 2px solid #ddd;
+            border-radius: 4px;
+            font-size: 16px;
+            box-sizing: border-box;
+        }
+        .form-group input:focus, .form-group textarea:focus {
+            border-color: #007bff;
+            outline: none;
+        }
+        .btn-primary {
+            background-color: #28a745;
+            color: white;
+            padding: 12px 30px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: bold;
+        }
+        .btn-primary:hover {
+            background-color: #218838;
+        }
+        .btn-secondary {
+            background-color: #6c757d;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            margin-left: 10px;
+            text-decoration: none;
+            display: inline-block;
+        }
+        .btn-secondary:hover {
+            background-color: #545b62;
+        }
+        .error-message {
+            color: #dc3545;
+            background-color: #f8d7da;
+            padding: 0.75rem;
+            border-radius: 4px;
+            margin-bottom: 1rem;
+            border: 1px solid #f5c6cb;
+        }
+        .expected-cash {
+            background: #fff3cd;
+            border: 1px solid #ffeaa7;
+            border-radius: 4px;
+            padding: 1rem;
+            margin: 1rem 0;
+            text-align: center;
+        }
+        .expected-cash .label {
+            font-weight: bold;
+            color: #856404;
+        }
+        .expected-cash .amount {
+            font-size: 1.8rem;
+            font-weight: bold;
+            color: #28a745;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>💰 Cierre de Caja</h1>
+            <p>Hola, {{ user.username }}! Estás a punto de cerrar tu turno.</p>
+        </div>
+
+        {% if messages %}
+            {% for message in messages %}
+                <div class="error-message">
+                    {{ message }}
+                </div>
+            {% endfor %}
+        {% endif %}
+
+        <div class="summary-section">
+            <h3>📊 Resumen del Turno</h3>
+
+            <div class="summary-grid">
+                <div class="summary-item">
+                    <h4>Fondo Inicial</h4>
+                    <div class="amount">${{ active_session.starting_balance|floatformat:2 }}</div>
+                </div>
+                <div class="summary-item">
+                    <h4>Ventas en Efectivo</h4>
+                    <div class="amount">${{ cash_sales|floatformat:2 }}</div>
+                </div>
+                <div class="summary-item">
+                    <h4>Ventas con Tarjeta</h4>
+                    <div class="amount">${{ card_sales|floatformat:2 }}</div>
+                </div>
+                <div class="summary-item">
+                    <h4>Total Ventas</h4>
+                    <div class="amount">${{ total_sales|floatformat:2 }}</div>
+                </div>
+            </div>
+
+            <div class="expected-cash">
+                <div class="label">💵 TOTAL ESPERADO EN CAJA:</div>
+                <div class="amount">${{ expected_cash|floatformat:2 }}</div>
+                <small>(Fondo Inicial + Ventas en Efectivo)</small>
+            </div>
+        </div>
+
+        <form method="post">
+            {% csrf_token %}
+
+            <div class="form-group">
+                <label for="ending_balance">Dinero Contado Físicamente en Caja:</label>
+                <input type="number"
+                       name="ending_balance"
+                       id="ending_balance"
+                       step="0.01"
+                       min="0"
+                       required
+                       placeholder="Ingresa el monto que contaste">
+            </div>
+
+            <div class="form-group">
+                <label for="notes">Notas u Observaciones (opcional):</label>
+                <textarea name="notes"
+                          id="notes"
+                          rows="3"
+                          placeholder="Ej: Billetes faltantes, vueltos, etc."></textarea>
+            </div>
+
+            <div style="text-align: center;">
+                <button type="submit" class="btn-primary">
+                    ✅ Confirmar Cierre de Caja
+                </button>
+                <a href="{% url 'pos_main' %}" class="btn-secondary">
+                    ↩️ Volver al POS
+                </a>
+            </div>
+        </form>
+    </div>
+</body>
+</html>

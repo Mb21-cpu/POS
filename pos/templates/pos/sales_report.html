@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Reporte de Ventas - Sistema POS</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid #ddd;
+        }
+        .nav-buttons {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+        .btn {
+            padding: 10px 15px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            text-decoration: none;
+            display: inline-block;
+            text-align: center;
+            font-size: 14px;
+        }
+        .btn-primary { background: #007bff; color: white; }
+        .btn-success { background: #28a745; color: white; }
+        .btn-secondary { background: #6c757d; color: white; }
+        .btn-info { background: #17a2b8; color: white; }
+
+        .report-form {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+        .form-control {
+            width: 100%;
+            padding: 8px 12px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+        .table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+        .table th,
+        .table td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+        }
+        .table th {
+            background-color: #f8f9fa;
+            font-weight: bold;
+        }
+        .summary-card {
+            background: #e9ecef;
+            padding: 15px;
+            border-radius: 6px;
+            margin: 20px 0;
+        }
+        .summary-card h4 {
+            margin-top: 0;
+            color: #495057;
+        }
+        .no-data {
+            text-align: center;
+            padding: 40px;
+            color: #6c757d;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <div class="header">
+            <h1>📈 Reporte de Ventas</h1>
+            <div>
+                <span><strong>Hola, {{ user.username }}!</strong></span>
+            </div>
+        </div>
+
+        <!-- Navegación -->
+        <div class="nav-buttons">
+            <a href="{% url 'admin_dashboard' %}" class="btn btn-primary">📊 Dashboard Principal</a>
+            <a href="/admin/" class="btn btn-secondary">⚙️ Panel Admin</a>
+            <a href="/admin/pos-dashboard/" class="btn btn-info">🏠 Dashboard Admin</a>
+            <a href="{% url 'pos_main' %}" class="btn btn-success">🛒 Ir al POS</a>
+        </div>
+
+        <!-- Formulario de fechas -->
+        <div class="report-form">
+            <h3>🔍 Seleccionar Rango de Fechas</h3>
+            <form method="POST">
+                {% csrf_token %}
+                <div style="display: grid; grid-template-columns: 1fr 1fr auto; gap: 15px; align-items: end;">
+                    <div class="form-group">
+                        <label for="start_date">Fecha Inicial:</label>
+                        <input type="date" id="start_date" name="start_date" class="form-control"
+                               value="{{ start_date|default:'' }}" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="end_date">Fecha Final:</label>
+                        <input type="date" id="end_date" name="end_date" class="form-control"
+                               value="{{ end_date|default:'' }}" required>
+                    </div>
+                    <div class="form-group">
+                        <button type="submit" class="btn btn-primary" style="height: 38px;">
+                            📊 Generar Reporte
+                        </button>
+                    </div>
+                </div>
+            </form>
+        </div>
+
+        <!-- Resumen del Reporte -->
+        {% if start_date and end_date %}
+        <div class="summary-card">
+            <h4>📋 Resumen del Periodo</h4>
+            <p><strong>Periodo:</strong> {{ start_date }} al {{ end_date }}</p>
+            <p><strong>Total de Ventas:</strong> ${{ total_sales|floatformat:2 }}</p>
+            <p><strong>Número de Transacciones:</strong> {{ total_transactions }}</p>
+            <p><strong>Ticket Promedio:</strong> ${{ total_sales|floatformat:2 }}</p>
+        </div>
+        {% endif %}
+
+        <!-- Tabla de Ventas -->
+        {% if sales %}
+        <h3>💰 Detalle de Ventas</h3>
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>ID Venta</th>
+                    <th>Fecha</th>
+                    <th>Vendedor</th>
+                    <th>Método de Pago</th>
+                    <th>Total</th>
+                    <th>Sesión</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for sale in sales %}
+                <tr>
+                    <td><strong>#{{ sale.id }}</strong></td>
+                    <td>{{ sale.created_at|date:"d/m/Y H:i" }}</td>
+                    <td>
+                        {% if sale.cash_drawer_session and sale.cash_drawer_session.user %}
+                            {{ sale.cash_drawer_session.user.username }}
+                        {% else %}
+                            <em>N/A</em>
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if sale.payment_method == 'cash' %}
+                            💵 Efectivo
+                        {% else %}
+                            💳 Tarjeta
+                        {% endif %}
+                    </td>
+                    <td><strong>${{ sale.total_amount|floatformat:2 }}</strong></td>
+                    <td>
+                        {% if sale.cash_drawer_session %}
+                            Sesión #{{ sale.cash_drawer_session.id }}
+                        {% else %}
+                            -
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+
+        <!-- Mensaje si no hay ventas -->
+        {% elif start_date and end_date %}
+        <div class="no-data">
+            <h3>📭 No hay ventas en el periodo seleccionado</h3>
+            <p>No se encontraron ventas entre {{ start_date }} y {{ end_date }}</p>
+        </div>
+        {% else %}
+        <div class="no-data">
+            <h3>📊 Selecciona un rango de fechas</h3>
+            <p>Usa el formulario superior para generar un reporte de ventas</p>
+        </div>
+        {% endif %}
+    </div>
+
+    <script>
+        // Establecer fecha máxima como hoy
+        const today = new Date().toISOString().split('T')[0];
+        document.getElementById('start_date').max = today;
+        document.getElementById('end_date').max = today;
+
+        // Validar que la fecha final no sea menor que la inicial
+        document.getElementById('start_date').addEventListener('change', function() {
+            document.getElementById('end_date').min = this.value;
+        });
+
+        document.getElementById('end_date').addEventListener('change', function() {
+            document.getElementById('start_date').max = this.value;
+        });
+    </script>
+</body>
+</html>

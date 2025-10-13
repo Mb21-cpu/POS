@@ -1,0 +1,214 @@
+{% extends "admin/base_site.html" %}
+{% load static %}
+
+{% block title %}Reporte de Ventas - {{ block.super }}{% endblock %}
+
+{% block extrastyle %}
+{{ block.super }}
+<style>
+.report-container {
+    padding: 20px;
+}
+
+.report-form {
+    background: #5C5CBD;
+    padding: 20px;
+    border-radius: 8px;
+    margin-bottom: 20px;
+}
+
+.form-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr auto;
+    gap: 15px;
+    align-items: end;
+}
+
+.form-group {
+    margin-bottom: 0;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 5px;
+    font-weight: bold;
+}
+
+.form-control {
+    width: 100%;
+    padding: 8px 12px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+}
+
+.summary-card {
+    background: #e9ecef;
+    padding: 20px;
+    border-radius: 8px;
+    margin: 20px 0;
+}
+
+.table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 20px;
+}
+
+.table th,
+.table td {
+    padding: 12px;
+    text-align: left;
+    border-bottom: 1px solid #ddd;
+}
+
+.table th {
+    background-color: #f8f9fa;
+    font-weight: bold;
+}
+
+.nav-buttons {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 20px;
+    flex-wrap: wrap;
+}
+
+.nav-btn {
+    display: inline-block;
+    padding: 10px 15px;
+    background: #417690;
+    color: white;
+    text-decoration: none;
+    border-radius: 4px;
+    font-size: 14px;
+}
+
+.nav-btn:hover {
+    background: #366477;
+    color: white;
+}
+
+.no-data {
+    text-align: center;
+    padding: 40px;
+    color: #6c757d;
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="report-container">
+    <h1>📈 Reporte de Ventas</h1>
+
+    <!-- Navegación -->
+    <div class="nav-buttons">
+        <a href="/admin/" class="nav-btn">⚙️ Panel Admin</a>
+        <a href="/admin/pos-dashboard/" class="nav-btn">🏠 Dashboard Admin</a>
+        <a href="/dashboard/" class="nav-btn">📊 Dashboard Principal</a>
+        <a href="/pos/" class="nav-btn">🛒 Ir al POS</a>
+        <a href="/reports/sales/" class="nav-btn">📈 Reporte Completo</a>
+    </div>
+
+    <!-- Formulario de fechas -->
+    <div class="report-form">
+        <h3>🔍 Seleccionar Rango de Fechas</h3>
+        <form method="POST">
+            {% csrf_token %}
+            <div class="form-grid">
+                <div class="form-group">
+                    <label for="start_date">Fecha Inicial:</label>
+                    <input type="date" id="start_date" name="start_date" class="form-control" 
+                           value="{{ start_date|default:'' }}" required>
+                </div>
+                <div class="form-group">
+                    <label for="end_date">Fecha Final:</label>
+                    <input type="date" id="end_date" name="end_date" class="form-control" 
+                           value="{{ end_date|default:'' }}" required>
+                </div>
+                <div class="form-group">
+                    <button type="submit" class="nav-btn" style="height: 38px;">
+                        📊 Generar Reporte
+                    </button>
+                </div>
+            </div>
+        </form>
+    </div>
+
+    <!-- Resumen del Reporte -->
+    {% if start_date and end_date %}
+    <div class="summary-card">
+        <h3>📋 Resumen del Periodo</h3>
+        <p><strong>Periodo:</strong> {{ start_date }} al {{ end_date }}</p>
+        <p><strong>Total de Ventas:</strong> ${{ total_sales|floatformat:2 }}</p>
+        <p><strong>Número de Transacciones:</strong> {{ total_transactions }}</p>
+        <p><strong>Ticket Promedio:</strong> ${{ total_sales|floatformat:2 }}</p>
+    </div>
+    {% endif %}
+
+    <!-- Tabla de Ventas -->
+    {% if sales %}
+    <h3>💰 Detalle de Ventas ({{ sales.count }} transacciones)</h3>
+    <table class="table">
+        <thead>
+            <tr>
+                <th>ID Venta</th>
+                <th>Fecha</th>
+                <th>Vendedor</th>
+                <th>Método de Pago</th>
+                <th>Total</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for sale in sales %}
+            <tr>
+                <td><strong>#{{ sale.id }}</strong></td>
+                <td>{{ sale.created_at|date:"d/m/Y H:i" }}</td>
+                <td>
+                    {% if sale.cash_drawer_session and sale.cash_drawer_session.user %}
+                        {{ sale.cash_drawer_session.user.username }}
+                    {% else %}
+                        <em>N/A</em>
+                    {% endif %}
+                </td>
+                <td>
+                    {% if sale.payment_method == 'cash' %}
+                        💵 Efectivo
+                    {% else %}
+                        💳 Tarjeta
+                    {% endif %}
+                </td>
+                <td><strong>${{ sale.total_amount|floatformat:2 }}</strong></td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    
+    {% elif start_date and end_date %}
+    <div class="no-data">
+        <h3>📭 No hay ventas en el periodo seleccionado</h3>
+        <p>No se encontraron ventas entre {{ start_date }} y {{ end_date }}</p>
+    </div>
+    {% else %}
+    <div class="no-data">
+        <h3>📊 Selecciona un rango de fechas</h3>
+        <p>Usa el formulario superior para generar un reporte de ventas</p>
+    </div>
+    {% endif %}
+</div>
+
+<script>
+    // Establecer fecha máxima como hoy
+    const today = new Date().toISOString().split('T')[0];
+    document.getElementById('start_date').max = today;
+    document.getElementById('end_date').max = today;
+    
+    // Validar que la fecha final no sea menor que la inicial
+    document.getElementById('start_date').addEventListener('change', function() {
+        document.getElementById('end_date').min = this.value;
+    });
+    
+    document.getElementById('end_date').addEventListener('change', function() {
+        document.getElementById('start_date').max = this.value;
+    });
+</script>
+{% endblock %}

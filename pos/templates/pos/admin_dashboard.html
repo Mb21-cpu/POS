@@ -1,0 +1,519 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard - Sistema POS</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .dashboard-container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid #ddd;
+        }
+        .metrics-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        .metric-card {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            text-align: center;
+        }
+        .metric-value {
+            font-size: 2rem;
+            font-weight: bold;
+            margin: 10px 0;
+        }
+        .metric-label {
+            color: #666;
+            font-size: 0.9rem;
+        }
+        .sales { border-left: 4px solid #28a745; }
+        .transactions { border-left: 4px solid #007bff; }
+        .ticket { border-left: 4px solid #ffc107; }
+        .sessions { border-left: 4px solid #dc3545; }
+        .week-sales { border-left: 4px solid #6f42c1; }
+        .cash-sales { border-left: 4px solid #20c997; }
+        .card-sales { border-left: 4px solid #17a2b8; }
+
+        .data-section {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        .data-card {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .data-card h3 {
+            margin-top: 0;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #eee;
+        }
+
+        .table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 15px;
+        }
+        .table th,
+        .table td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+        }
+        .table th {
+            background-color: #f8f9fa;
+            font-weight: bold;
+        }
+
+        /* NAVEGACIÓN MEJORADA */
+        .nav-buttons {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 30px;
+            flex-wrap: wrap;
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .btn {
+            padding: 12px 20px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            text-decoration: none;
+            display: inline-block;
+            text-align: center;
+            font-size: 14px;
+            font-weight: bold;
+            transition: all 0.3s ease;
+        }
+        .btn-primary {
+            background: #007bff;
+            color: white;
+        }
+        .btn-secondary {
+            background: #6c757d;
+            color: white;
+        }
+        .btn-success {
+            background: #28a745;
+            color: white;
+        }
+        .btn-info {
+            background: #17a2b8;
+            color: white;
+        }
+        .btn-warning {
+            background: #ffc107;
+            color: black;
+        }
+        .btn-danger {
+            background: #dc3545;
+            color: white;
+        }
+        .btn-purple {
+            background: #6f42c1;
+            color: white;
+        }
+        .btn-teal {
+            background: #20c997;
+            color: white;
+        }
+        .btn:hover {
+            opacity: 0.9;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+        }
+
+        .positive { color: #28a745; }
+        .warning { color: #ffc107; }
+        .danger { color: #dc3545; }
+
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .status-badge {
+            padding: 4px 8px;
+            border-radius: 12px;
+            font-size: 0.8rem;
+            font-weight: bold;
+        }
+        .status-active {
+            background: #d4edda;
+            color: #155724;
+        }
+        .status-inactive {
+            background: #f8d7da;
+            color: #721c24;
+        }
+
+        .stock-alert {
+            padding: 8px 12px;
+            border-radius: 4px;
+            margin: 5px 0;
+            font-size: 0.9rem;
+        }
+        .stock-low {
+            background: #fff3cd;
+            border-left: 4px solid #ffc107;
+            color: #856404;
+        }
+        .stock-out {
+            background: #f8d7da;
+            border-left: 4px solid #dc3545;
+            color: #721c24;
+        }
+
+        @media (max-width: 768px) {
+            .data-section {
+                grid-template-columns: 1fr;
+            }
+            .nav-buttons {
+                flex-direction: column;
+            }
+            .header {
+                flex-direction: column;
+                gap: 15px;
+                text-align: center;
+            }
+        }
+
+        /* Sección de navegación destacada */
+        .navigation-section {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 25px;
+            border-radius: 10px;
+            margin-bottom: 30px;
+        }
+        .navigation-section h2 {
+            margin-top: 0;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+    <div class="dashboard-container">
+        <!-- Header -->
+        <div class="header">
+            <h1>📊 Dashboard Administrativo - Sistema POS</h1>
+            <div class="user-info">
+                <span><strong>Hola, {{ user.username }}!</strong></span>
+                {% if user.is_staff %}
+                <span class="status-badge status-active">Administrador</span>
+                {% else %}
+                <span class="status-badge status-inactive">Vendedor</span>
+                {% endif %}
+                <a href="{% url 'logout' %}" class="btn btn-danger">🚪 Cerrar Sesión</a>
+            </div>
+        </div>
+
+        <!-- SECCIÓN DE NAVEGACIÓN PRINCIPAL -->
+        <div class="navigation-section">
+            <h2>🚀 Navegación Rápida</h2>
+            <div class="nav-buttons" style="background: transparent; box-shadow: none; padding: 0;">
+                <a href="{% url 'admin_dashboard' %}" class="btn btn-success">📊 Dashboard Principal</a>
+                <a href="/admin/" class="btn btn-primary">⚙️ Panel de Administración</a>
+                <a href="/admin/pos-dashboard/" class="btn btn-purple">🏠 Dashboard del Admin</a>
+                <a href="{% url 'pos_main' %}" class="btn btn-info">🛒 Ir al Punto de Venta</a>
+                <a href="/admin/pos/product/" class="btn btn-warning">📦 Gestionar Productos</a>
+                <a href="{% url 'sales_report' %}" class="btn btn-teal">📈 Reporte de Ventas</a>
+                <a href="/admin/sales-report/" class="btn btn-info">📋 Reporte en Admin</a>
+            </div>
+        </div>
+
+        <!-- Métricas Principales -->
+        <div class="metrics-grid">
+            <div class="metric-card sales">
+                <div class="metric-label">Ventas Totales Hoy</div>
+                <div class="metric-value">${{ today_sales|floatformat:2 }}</div>
+                <small>Oct. {{ today_date.day }}, {{ today_date.year }}</small>
+            </div>
+
+            <div class="metric-card transactions">
+                <div class="metric-label">Transacciones Hoy</div>
+                <div class="metric-value">{{ today_transactions }}</div>
+                <small>Número de ventas</small>
+            </div>
+
+            <div class="metric-card ticket">
+                <div class="metric-label">Ticket Promedio</div>
+                <div class="metric-value">${{ today_avg_ticket|floatformat:2 }}</div>
+                <small>Por transacción</small>
+            </div>
+
+            <div class="metric-card sessions">
+                <div class="metric-label">Sesiones Activas</div>
+                <div class="metric-value">{{ active_sessions }}</div>
+                <small>Cajas abiertas</small>
+            </div>
+        </div>
+
+        <!-- Métricas Adicionales -->
+        <div class="metrics-grid">
+            <div class="metric-card week-sales">
+                <div class="metric-label">Ventas Esta Semana</div>
+                <div class="metric-value">${{ week_sales|floatformat:2 }}</div>
+                <small>Desde {{ week_ago }}</small>
+            </div>
+
+            <div class="metric-card cash-sales">
+                <div class="metric-label">Ventas Efectivo Hoy</div>
+                <div class="metric-value">${{ cash_sales_today|floatformat:2 }}</div>
+                <small>Transacciones en efectivo</small>
+            </div>
+
+            <div class="metric-card card-sales">
+                <div class="metric-label">Ventas Tarjeta Hoy</div>
+                <div class="metric-value">${{ card_sales_today|floatformat:2 }}</div>
+                <small>Transacciones con tarjeta</small>
+            </div>
+
+            <div class="metric-card" style="border-left: 4px solid #fd7e14;">
+                <div class="metric-label">Productos con Stock Bajo</div>
+                <div class="metric-value">{{ low_stock_products.count }}</div>
+                <small>Menos de 10 unidades</small>
+            </div>
+        </div>
+
+        <!-- NAVEGACIÓN SECUNDARIA -->
+        <div class="nav-buttons">
+            <a href="/admin/pos/sale/" class="btn btn-primary">💰 Ver Todas las Ventas</a>
+            <a href="/admin/pos/cashdrawersession/" class="btn btn-secondary">🏦 Historial de Cajas</a>
+            <a href="/admin/pos/category/" class="btn btn-success">📂 Gestionar Categorías</a>
+            <a href="/admin/pos/supplier/" class="btn btn-info">🏢 Gestionar Proveedores</a>
+            <a href="/admin/auth/user/" class="btn btn-warning">👥 Gestionar Usuarios</a>
+            <a href="/admin/auth/group/" class="btn btn-purple">👨‍💼 Gestionar Grupos</a>
+        </div>
+
+        <!-- Sección de Datos -->
+        <div class="data-section">
+            <!-- Productos Más Vendidos -->
+            <div class="data-card">
+                <h3>🏆 Productos Más Vendidos</h3>
+                {% if top_products %}
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>Producto</th>
+                            <th>Cantidad Vendida</th>
+                            <th>Total Recaudado</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for product in top_products %}
+                        <tr>
+                            <td>{{ product.product_name }}</td>
+                            <td><strong>{{ product.total_sold }}</strong> unidades</td>
+                            <td><strong>${{ product.total_revenue|default:0|floatformat:2 }}</strong></td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+                {% else %}
+                <p style="text-align: center; color: #666; padding: 20px;">No hay datos de ventas aún.</p>
+                {% endif %}
+            </div>
+
+            <!-- Alertas de Stock -->
+            <div class="data-card">
+                <h3>⚠️ Alertas de Stock</h3>
+
+                {% if low_stock_products %}
+                <h4 style="color: #856404; margin-top: 15px;">📦 Stock Bajo</h4>
+                {% for product in low_stock_products %}
+                <div class="stock-alert stock-low">
+                    <strong>{{ product.name }}</strong> - {{ product.stock }} unidades restantes
+                </div>
+                {% endfor %}
+                {% endif %}
+
+                {% if out_of_stock_products %}
+                <h4 style="color: #721c24; margin-top: 15px;">❌ Sin Stock</h4>
+                {% for product in out_of_stock_products %}
+                <div class="stock-alert stock-out">
+                    <strong>{{ product.name }}</strong> - AGOTADO
+                </div>
+                {% endfor %}
+                {% endif %}
+
+                {% if not low_stock_products and not out_of_stock_products %}
+                <p style="text-align: center; color: #28a745; padding: 20px;">
+                    ✅ Todo el stock está en niveles adecuados
+                </p>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Segunda Sección de Datos -->
+        <div class="data-section">
+            <!-- Sesiones de Hoy -->
+            <div class="data-card">
+                <h3>💰 Sesiones de Caja Hoy</h3>
+                {% if today_sessions %}
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>Usuario</th>
+                            <th>Hora Apertura</th>
+                            <th>Fondo Inicial</th>
+                            <th>Estado</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for session in today_sessions %}
+                        <tr>
+                            <td>{{ session.user.username }}</td>
+                            <td>{{ session.start_time|time:"H:i" }}</td>
+                            <td>${{ session.starting_balance|floatformat:2 }}</td>
+                            <td>
+                                {% if session.end_time %}
+                                    <span class="danger">🔴 Cerrada</span>
+                                {% else %}
+                                    <span class="positive">🟢 Activa</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+                {% else %}
+                <p style="text-align: center; color: #666; padding: 20px;">No hay sesiones hoy.</p>
+                {% endif %}
+            </div>
+
+            <!-- Métodos de Pago Hoy -->
+            <div class="data-card">
+                <h3>💳 Distribución de Pagos Hoy</h3>
+                <div style="text-align: center; padding: 20px;">
+                    <div style="display: inline-block; text-align: left;">
+                        <div style="margin: 10px 0;">
+                            <span style="color: #20c997; font-weight: bold;">💵 Efectivo:</span>
+                            <strong>${{ cash_sales_today|floatformat:2 }}</strong>
+                            {% if today_sales > 0 %}
+                            <small style="color: #666;">({{ cash_sales_today|floatformat:0 }}%)</small>
+                            {% endif %}
+                        </div>
+                        <div style="margin: 10px 0;">
+                            <span style="color: #17a2b8; font-weight: bold;">💳 Tarjeta:</span>
+                            <strong>${{ card_sales_today|floatformat:2 }}</strong>
+                            {% if today_sales > 0 %}
+                            <small style="color: #666;">({{ card_sales_today|floatformat:0 }}%)</small>
+                            {% endif %}
+                        </div>
+                        <div style="margin: 10px 0; padding-top: 10px; border-top: 1px solid #eee;">
+                            <span style="font-weight: bold;">📊 Total:</span>
+                            <strong>${{ today_sales|floatformat:2 }}</strong>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Ventas Recientes -->
+        <div class="data-card">
+            <h3>📋 Ventas Recientes</h3>
+            {% if recent_sales %}
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Vendedor</th>
+                        <th>Total</th>
+                        <th>Método</th>
+                        <th>Fecha</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for sale in recent_sales %}
+                    <tr>
+                        <td><strong>#{{ sale.id }}</strong></td>
+                        <td>
+                            {% if sale.cash_drawer_session and sale.cash_drawer_session.user %}
+                                {{ sale.cash_drawer_session.user.username }}
+                            {% else %}
+                                <em>N/A</em>
+                            {% endif %}
+                        </td>
+                        <td><strong>${{ sale.total_amount|floatformat:2 }}</strong></td>
+                        <td>
+                            {% if sale.payment_method == 'cash' %}
+                                <span style="color: #20c997;">💵 Efectivo</span>
+                            {% else %}
+                                <span style="color: #17a2b8;">💳 Tarjeta</span>
+                            {% endif %}
+                        </td>
+                        <td>{{ sale.created_at|date:"H:i" }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            {% else %}
+            <p style="text-align: center; color: #666; padding: 20px;">No hay ventas recientes.</p>
+            {% endif %}
+        </div>
+
+        <!-- Navegación Inferior -->
+        <div class="nav-buttons">
+            <a href="/admin/" class="btn btn-primary">⚙️ Volver al Panel Admin</a>
+            <a href="/admin/pos-dashboard/" class="btn btn-purple">🏠 Dashboard del Admin</a>
+            <a href="{% url 'pos_main' %}" class="btn btn-info">🛒 Ir al POS</a>
+            <a href="{% url 'sales_report' %}" class="btn btn-teal">📈 Reporte de Ventas</a>
+            <a href="{% url 'admin_dashboard' %}" class="btn btn-success">🔄 Recargar Dashboard</a>
+        </div>
+
+        <!-- Footer Info -->
+        <div style="text-align: center; margin-top: 30px; padding: 20px; color: #666; border-top: 1px solid #ddd;">
+            <p>
+                <strong>Sistema POS - Dashboard Administrativo</strong> |
+                {{ today_date }} |
+                <strong>{{ today_transactions }}</strong> transacciones hoy |
+                <strong>${{ today_sales|floatformat:2 }}</strong> en ventas |
+                <strong>{{ active_sessions }}</strong> cajas activas
+            </p>
+            <small>Actualizado: {% now "H:i" %}</small>
+        </div>
+    </div>
+
+    <script>
+        // Auto-refresh cada 60 segundos para mantener los datos actualizados
+        setTimeout(function() {
+            window.location.reload();
+        }, 60000);
+
+        // Mostrar hora de actualización
+        function updateTime() {
+            const now = new Date();
+            document.querySelector('small').textContent = 'Actualizado: ' + now.toLocaleTimeString();
+        }
+        setInterval(updateTime, 1000);
+    </script>
+</body>
+</html>

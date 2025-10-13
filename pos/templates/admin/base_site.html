@@ -1,0 +1,23 @@
+{% extends "admin/base.html" %}
+
+{% block title %}{{ title }} | {{ site_title|default:_('Django site admin') }}{% endblock %}
+
+{% block branding %}
+<h1 id="site-name"><a href="{% url 'admin:index' %}">{{ site_header|default:_('Django administration') }}</a></h1>
+{% endblock %}
+
+{% block nav-global %}
+{% if user.is_staff %}
+<div style="float: right; margin: 8px 20px;">
+    <a href="/dashboard/" style="color: white; text-decoration: none; background: #28a745; padding: 8px 15px; border-radius: 4px; margin-right: 10px; font-size: 14px;">
+        📊 Dashboard Principal
+    </a>
+    <a href="/admin/pos-dashboard/" style="color: white; text-decoration: none; background: #6f42c1; padding: 8px 15px; border-radius: 4px; margin-right: 10px; font-size: 14px;">
+        🏠 Dashboard Admin
+    </a>
+    <a href="/pos/" style="color: white; text-decoration: none; background: #17a2b8; padding: 8px 15px; border-radius: 4px; font-size: 14px;">
+        🛒 Ir al POS
+    </a>
+</div>
+{% endif %}
+{% endblock %}

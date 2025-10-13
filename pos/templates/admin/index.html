@@ -1,0 +1,86 @@
+{% extends "admin/base_site.html" %}
+{% load i18n static %}
+
+{% block extrastyle %}
+{{ block.super }}
+<style>
+.quick-navigation {
+    background: #f8f9fa;
+    border: 1px solid #dee2e6;
+    border-radius: 5px;
+    padding: 20px;
+    margin: 20px 0;
+}
+
+.quick-navigation h2 {
+    margin-top: 0;
+    color: #417690;
+    border-bottom: 2px solid #417690;
+    padding-bottom: 10px;
+}
+
+.nav-buttons {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    margin-top: 15px;
+}
+
+.nav-btn {
+    display: inline-block;
+    padding: 10px 15px;
+    background: #417690;
+    color: white;
+    text-decoration: none;
+    border-radius: 4px;
+    font-size: 14px;
+    transition: all 0.3s ease;
+}
+
+.nav-btn:hover {
+    background: #366477;
+    color: white;
+    text-decoration: none;
+    transform: translateY(-2px);
+}
+
+.nav-btn.dashboard { background: #28a745; }
+.nav-btn.dashboard:hover { background: #218838; }
+
+.nav-btn.pos { background: #17a2b8; }
+.nav-btn.pos:hover { background: #138496; }
+
+.nav-btn.admin-dash { background: #6f42c1; }
+.nav-btn.admin-dash:hover { background: #5a359c; }
+
+.nav-btn.products { background: #ffc107; color: black; }
+.nav-btn.products:hover { background: #e0a800; color: black; }
+
+.nav-btn.sales { background: #dc3545; }
+.nav-btn.sales:hover { background: #c82333; }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Navegación rápida personalizada -->
+<div class="quick-navigation">
+    <h2>🚀 Navegación Rápida - Sistema POS</h2>
+    <p>Acceso rápido a las principales secciones del sistema:</p>
+
+    <div class="nav-buttons">
+        <a href="/dashboard/" class="nav-btn dashboard">📊 Dashboard Principal</a>
+        <a href="/admin/pos-dashboard/" class="nav-btn admin-dash">🏠 Dashboard Admin</a>
+        <a href="/pos/" class="nav-btn pos">🛒 Ir al POS</a>
+        <a href="/admin/pos/product/" class="nav-btn products">📦 Gestionar Productos</a>
+        <a href="/admin/pos/sale/" class="nav-btn sales">💰 Ver Ventas</a>
+        <a href="/admin/pos/cashdrawersession/" class="nav-btn">🏦 Sesiones de Caja</a>
+        <a href="/admin/pos/category/" class="nav-btn">📂 Categorías</a>
+        <a href="/admin/pos/supplier/" class="nav-btn">🏢 Proveedores</a>
+    </div>
+</div>
+
+<!-- Contenido original del admin -->
+<div id="content-main">
+    {% include "admin/app_list.html" with app_list=app_list show_changelinks=True %}
+</div>
+{% endblock %}
