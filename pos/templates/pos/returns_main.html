@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Devoluciones - POS</title>
+    <script src="https://unpkg.com/htmx.org@1.9.10"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            padding: 20px;
+        }
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #eee;
+        }
+        .search-section {
+            margin-bottom: 20px;
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 8px;
+        }
+        .search-input {
+            width: 300px;
+            padding: 10px;
+            font-size: 16px;
+            border: 2px solid #007bff;
+            border-radius: 4px;
+            margin-right: 10px;
+        }
+        .search-btn {
+            background: #007bff;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        .sale-details {
+            margin: 20px 0;
+            padding: 15px;
+            background: #e7f3ff;
+            border-radius: 4px;
+            border: 1px solid #b3d9ff;
+        }
+        .return-form {
+            margin: 20px 0;
+        }
+        .return-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 20px;
+        }
+        .return-table th,
+        .return-table td {
+            border: 1px solid #ddd;
+            padding: 12px;
+            text-align: left;
+        }
+        .return-table th {
+            background-color: #f8f9fa;
+        }
+        .return-qty {
+            width: 80px;
+            padding: 5px;
+            text-align: center;
+        }
+        .btn-primary {
+            background: #007bff;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        .btn-secondary {
+            background: #6c757d;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            text-decoration: none;
+            display: inline-block;
+        }
+        .error-message {
+            color: #dc3545;
+            background: #f8d7da;
+            padding: 10px;
+            border-radius: 4px;
+            margin: 10px 0;
+        }
+        .success-message {
+            color: #155724;
+            background: #d4edda;
+            padding: 10px;
+            border-radius: 4px;
+            margin: 10px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🔄 Proceso de Devolución</h1>
+            <a href="{% url 'pos_main' %}" class="btn-secondary">← Volver al POS</a>
+        </div>
+
+        <!-- Mensajes -->
+        {% if messages %}
+            {% for message in messages %}
+                <div class="{% if message.tags == 'success' %}success-message{% else %}error-message{% endif %}">
+                    {{ message }}
+                </div>
+            {% endfor %}
+        {% endif %}
+
+        <!-- Búsqueda de venta -->
+        <div class="search-section">
+            <h3>🔍 Buscar Venta para Devolución</h3>
+            <input type="text"
+                   id="sale-search"
+                   placeholder="Ingresa el ID de la venta..."
+                   class="search-input">
+            <button onclick="searchSale()" class="search-btn">Buscar Venta</button>
+        </div>
+
+        <!-- Resultados de búsqueda -->
+        <div id="sale-results">
+            <p>👆 Ingresa el ID de una venta para comenzar</p>
+        </div>
+    </div>
+
+    <script>
+        function searchSale() {
+            const saleId = document.getElementById('sale-search').value.trim();
+            if (!saleId) {
+                alert('Por favor ingresa un ID de venta');
+                return;
+            }
+
+            htmx.ajax('GET', `{% url 'search_sale_return' %}?sale_id=${saleId}`, {
+                target: '#sale-results',
+                swap: 'innerHTML'
+            });
+        }
+
+        // También buscar al presionar Enter
+        document.getElementById('sale-search').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                searchSale();
+            }
+        });
+    </script>
+</body>
+</html>

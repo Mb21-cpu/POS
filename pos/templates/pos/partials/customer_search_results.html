@@ -1,0 +1,27 @@
+<!-- pos/templates/pos/partials/customer_search_results.html -->
+{% if customers %}
+    <div class="customer-results">
+        <h4>🔍 Resultados de búsqueda:</h4>
+        <div class="customer-list">
+            {% for customer in customers %}
+            <div class="customer-item"
+                 onclick="selectCustomer({{ customer.id }}, '{{ customer.name|escapejs }}', '{{ customer.tax_id|escapejs }}')"
+                 style="padding: 10px; border: 1px solid #ddd; margin: 5px 0; cursor: pointer; border-radius: 4px; background: #f8f9fa;">
+                <strong>{{ customer.name }}</strong>
+                {% if customer.tax_id %}<br><small>RUC/CI: {{ customer.tax_id }}</small>{% endif %}
+                {% if customer.phone %}<br><small>📞 {{ customer.phone }}</small>{% endif %}
+                {% if customer.email %}<br><small>📧 {{ customer.email }}</small>{% endif %}
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+{% elif query %}
+    <div class="no-results">
+        <p>❌ No se encontraron clientes para "{{ query }}"</p>
+        <p><small>💡 Prueba con nombre, RUC o email</small></p>
+    </div>
+{% else %}
+    <div class="no-results">
+        <p>👆 Escribe para buscar clientes...</p>
+    </div>
+{% endif %}

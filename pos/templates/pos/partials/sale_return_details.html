@@ -1,0 +1,91 @@
+{% if error %}
+    <div class="error-message">
+        {{ error }}
+    </div>
+{% elif sale %}
+    <div class="sale-details">
+        <h3>📋 Detalles de Venta #{{ sale.id }}</h3>
+        <p><strong>Fecha:</strong> {{ sale.created_at|date:"d/m/Y H:i" }}</p>
+        <p><strong>Vendedor:</strong> {{ sale.cash_drawer_session.user.username }}</p>
+        {% if sale.customer %}
+            <p><strong>Cliente:</strong> {{ sale.customer.name }}</p>
+        {% endif %}
+        <p><strong>Total Original:</strong> ${{ sale.total_amount|floatformat:2 }}</p>
+        <p><strong>Método de Pago:</strong> {{ sale.get_payment_method_display }}</p>
+    </div>
+
+    <form method="post" action="{% url 'process_return' %}" class="return-form">
+        {% csrf_token %}
+        <input type="hidden" name="sale_id" value="{{ sale.id }}">
+        
+        <h4>🔄 Seleccionar Productos a Devolver</h4>
+        <table class="return-table">
+            <thead>
+                <tr>
+                    <th>Producto</th>
+                    <th>Precio Unit.</th>
+                    <th>Cant. Comprada</th>
+                    <th>Cant. a Devolver</th>
+                    <th>Subtotal</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for item in sale.items.all %}
+                <tr>
+                    <td>{{ item.product_name }}</td>
+                    <td>${{ item.unit_price|floatformat:2 }}</td>
+                    <td>{{ item.quantity }}</td>
+                    <td>
+                        <input type="number" 
+                               name="return_qty_{{ item.id }}"
+                               class="return-qty"
+                               min="0" 
+                               max="{{ item.quantity }}"
+                               value="0"
+                               onchange="updateReturnSubtotal(this, {{ item.unit_price }})">
+                    </td>
+                    <td class="subtotal">$0.00</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+
+        <div style="margin: 15px 0;">
+            <strong>Motivo de la devolución (opcional):</strong><br>
+            <textarea name="reason" rows="3" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;"></textarea>
+        </div>
+
+        <div style="background: #f8f9fa; padding: 15px; border-radius: 4px; margin: 15px 0;">
+            <h4>Total a Reembolsar: <span id="total-refund">$0.00</span></h4>
+        </div>
+
+        <button type="submit" class="btn-primary" onclick="return confirm('¿Confirmar devolución? El stock será restaurado.')">
+            ✅ Procesar Devolución
+        </button>
+    </form>
+
+    <script>
+        function updateReturnSubtotal(input, unitPrice) {
+            const quantity = parseInt(input.value) || 0;
+            const subtotal = quantity * unitPrice;
+            
+            // Actualizar subtotal de la fila
+            const row = input.closest('tr');
+            row.querySelector('.subtotal').textContent = `$${subtotal.toFixed(2)}`;
+            
+            // Actualizar total general
+            updateTotalRefund();
+        }
+
+        function updateTotalRefund() {
+            let total = 0;
+            document.querySelectorAll('.subtotal').forEach(cell => {
+                const value = parseFloat(cell.textContent.replace('$', '')) || 0;
+                total += value;
+            });
+            document.getElementById('total-refund').textContent = `$${total.toFixed(2)}`;
+        }
+    </script>
+{% else %}
+    <p>👆 Ingresa el ID de una venta para comenzar</p>
+{% endif %}
