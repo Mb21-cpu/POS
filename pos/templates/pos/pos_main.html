@@ -49,6 +49,52 @@
             border: 2px solid #007bff;
             border-radius: 4px;
         }
+
+        /* NUEVO: Estilos para la sección de clientes */
+        .customer-section {
+            margin-bottom: 20px;
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 8px;
+            border: 1px solid #e9ecef;
+        }
+        .customer-results {
+            max-height: 200px;
+            overflow-y: auto;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            padding: 10px;
+            margin-top: 10px;
+            background: white;
+        }
+        .customer-item {
+            padding: 10px;
+            border: 1px solid #ddd;
+            margin: 5px 0;
+            cursor: pointer;
+            border-radius: 4px;
+            background: #f8f9fa;
+            transition: all 0.2s;
+        }
+        .customer-item:hover {
+            background: #007bff !important;
+            color: white;
+            border-color: #007bff;
+        }
+        .selected-customer {
+            margin-top: 10px;
+            padding: 10px;
+            background: #d4edda;
+            border: 1px solid #c3e6cb;
+            border-radius: 4px;
+            display: none;
+        }
+        .no-results {
+            color: #6c757d;
+            font-style: italic;
+            padding: 10px;
+        }
+
         .cart-section {
             margin-top: 20px;
         }
@@ -249,9 +295,33 @@
             <span>Iniciada: {{ active_session.start_time|date:"H:i" }}</span>
         </div>
 
+        <!-- NUEVO: Sección de búsqueda de clientes -->
+<div class="customer-section">
+    <h3>👤 Buscar Cliente (Opcional)</h3>
+    <input type="text"
+           id="customer-search"
+           name="q"
+           placeholder="Buscar por nombre, RUC o email..."
+           hx-get="{% url 'search_customers' %}"
+           hx-trigger="keyup changed delay:500ms"
+           hx-target="#customer-results"
+           hx-include="[name='customer_search']"
+           class="search-input">
+
+    <!-- Resultados de búsqueda -->
+    <div id="customer-results" style="margin-top: 10px;"></div>
+
+    <!-- Cliente seleccionado -->
+    <div id="selected-customer" class="selected-customer">
+        <strong>Cliente seleccionado:</strong>
+        <span id="customer-name"></span>
+        <input type="hidden" id="customer-id" name="customer_id">
+        <button type="button" onclick="clearCustomer()" style="margin-left: 10px; color: #dc3545; background: none; border: none; cursor: pointer;">✕</button>
+    </div>
+</div>
         <!-- Sección de búsqueda de productos -->
         <div class="search-section">
-            <h3>Buscar Producto por SKU</h3>
+            <h3>🔍 Buscar Producto por SKU</h3>
             <input type="text"
                    class="search-input"
                    placeholder="Escribe el SKU y presiona ENTER..."
@@ -282,7 +352,7 @@
 
         <!-- Sección del carrito -->
         <div class="cart-section">
-            <h3>Carrito de Venta
+            <h3>🛍️ Carrito de Venta
                 {% if cart_items %}
                     <span class="cart-count">{{ cart_items|length }}</span>
                 {% endif %}
@@ -347,6 +417,7 @@
             <form method="post" action="{% url 'checkout' %}" id="checkout-form">
                 {% csrf_token %}
                 <input type="hidden" name="payment_method" id="payment-method" value="cash">
+                <input type="hidden" name="customer_id" id="form-customer-id" value="">
 
                 <button type="submit" class="checkout-btn" {% if not cart_items %}disabled{% endif %}>
                     ✅ Finalizar Venta -
@@ -364,6 +435,10 @@
                 <a href="{% url 'close_session' %}" class="btn-warning">
                     🔒 Cerrar Caja
                 </a>
+                    </a>
+    <a href="{% url 'returns_main' %}" class="btn-secondary" style="background: #17a2b8;">
+        🔄 Devoluciones
+    </a>
                 <a href="{% url 'pos_main' %}" class="btn-secondary">
                     🔄 Limpiar Todo
                 </a>
@@ -376,6 +451,30 @@
         document.body.addEventListener('htmx:configRequest', function(event) {
             event.detail.headers['X-CSRFToken'] = '{{ csrf_token }}';
         });
+
+        // NUEVO: Funciones para manejar clientes
+        function selectCustomer(customerId, customerName, customerTaxId) {
+            // Mostrar información del cliente seleccionado
+            document.getElementById('customer-name').textContent = customerName + (customerTaxId ? ' (' + customerTaxId + ')' : '');
+            document.getElementById('customer-id').value = customerId;
+            document.getElementById('form-customer-id').value = customerId;
+            document.getElementById('selected-customer').style.display = 'block';
+
+            // Limpiar resultados de búsqueda
+            document.getElementById('customer-results').innerHTML = '';
+            document.getElementById('customer-search').value = '';
+
+            // Mostrar mensaje de confirmación
+            showStockNotification(`Cliente "${customerName}" seleccionado`, 'success');
+        }
+
+        function clearCustomer() {
+            document.getElementById('selected-customer').style.display = 'none';
+            document.getElementById('customer-id').value = '';
+            document.getElementById('form-customer-id').value = '';
+            document.getElementById('customer-search').value = '';
+            showStockNotification('Cliente deseleccionado', 'success');
+        }
 
         // Función para limpiar el campo de búsqueda después de añadir producto
         document.addEventListener('htmx:afterRequest', function(event) {

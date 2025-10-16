@@ -42,10 +42,56 @@
 }
 
 .summary-card {
-    background: #e9ecef;
+    background: #51519E;
     padding: 20px;
     border-radius: 8px;
     margin: 20px 0;
+}
+
+.export-section {
+    background: #28a745;
+    padding: 15px;
+    border-radius: 8px;
+    margin: 20px 0;
+    text-align: center;
+}
+
+.export-buttons {
+    display: flex;
+    gap: 15px;
+    justify-content: center;
+    flex-wrap: wrap;
+}
+
+.export-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 12px 20px;
+    color: white;
+    text-decoration: none;
+    border-radius: 6px;
+    font-size: 14px;
+    font-weight: bold;
+    border: none;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.export-btn.excel {
+    background: #217346;
+}
+
+.export-btn.excel:hover {
+    background: #1e663e;
+}
+
+.export-btn.pdf {
+    background: #dc3545;
+}
+
+.export-btn.pdf:hover {
+    background: #c82333;
 }
 
 .table {
@@ -111,22 +157,22 @@
 
     <!-- Formulario de fechas -->
     <div class="report-form">
-        <h3>🔍 Seleccionar Rango de Fechas</h3>
+        <h3 style="color: white; margin-top: 0;">🔍 Seleccionar Rango de Fechas</h3>
         <form method="POST">
             {% csrf_token %}
             <div class="form-grid">
                 <div class="form-group">
-                    <label for="start_date">Fecha Inicial:</label>
-                    <input type="date" id="start_date" name="start_date" class="form-control" 
+                    <label for="start_date" style="color: white;">Fecha Inicial:</label>
+                    <input type="date" id="start_date" name="start_date" class="form-control"
                            value="{{ start_date|default:'' }}" required>
                 </div>
                 <div class="form-group">
-                    <label for="end_date">Fecha Final:</label>
-                    <input type="date" id="end_date" name="end_date" class="form-control" 
+                    <label for="end_date" style="color: white;">Fecha Final:</label>
+                    <input type="date" id="end_date" name="end_date" class="form-control"
                            value="{{ end_date|default:'' }}" required>
                 </div>
                 <div class="form-group">
-                    <button type="submit" class="nav-btn" style="height: 38px;">
+                    <button type="submit" class="nav-btn" style="height: 38px; background: #28a745;">
                         📊 Generar Reporte
                     </button>
                 </div>
@@ -142,6 +188,34 @@
         <p><strong>Total de Ventas:</strong> ${{ total_sales|floatformat:2 }}</p>
         <p><strong>Número de Transacciones:</strong> {{ total_transactions }}</p>
         <p><strong>Ticket Promedio:</strong> ${{ total_sales|floatformat:2 }}</p>
+    </div>
+    {% endif %}
+
+    <!-- Sección de Exportación -->
+    {% if sales and start_date and end_date %}
+    <div class="export-section">
+        <h3 style="color: white; margin-top: 0;">📤 Exportar Reporte</h3>
+        <p style="color: white; margin-bottom: 15px;">Descarga el reporte en los siguientes formatos:</p>
+
+        <div class="export-buttons">
+            <form method="post" style="display: inline;">
+                {% csrf_token %}
+                <input type="hidden" name="start_date" value="{{ start_date|date:'Y-m-d' }}">
+                <input type="hidden" name="end_date" value="{{ end_date|date:'Y-m-d' }}">
+                <button type="submit" name="export_excel" class="export-btn excel">
+                    📊 Exportar a Excel
+                </button>
+            </form>
+
+            <form method="post" style="display: inline;">
+                {% csrf_token %}
+                <input type="hidden" name="start_date" value="{{ start_date|date:'Y-m-d' }}">
+                <input type="hidden" name="end_date" value="{{ end_date|date:'Y-m-d' }}">
+                <button type="submit" name="export_pdf" class="export-btn pdf">
+                    📄 Exportar a PDF
+                </button>
+            </form>
+        </div>
     </div>
     {% endif %}
 

@@ -7,7 +7,7 @@
 <style>
 .dashboard-container {
     padding: 20px;
-    background: #blue;
+    background: #f8f9fa;
     min-height: calc(100vh - 60px);
 }
 
@@ -19,7 +19,7 @@
 }
 
 .metric-card {
-    background: yellow;
+    background: white;
     padding: 25px;
     border-radius: 10px;
     box-shadow: 0 2px 10px rgba(0,0,0,0.1);
@@ -29,7 +29,7 @@
 
 .metric-value {
     font-size: 2.5em;
-    font-red: bold;
+    font-weight: bold;
     color: #417690;
     margin: 10px 0;
 }
@@ -41,7 +41,7 @@
 }
 
 .data-section {
-    background:#DED1CE ;
+    background: white;
     padding: 20px;
     border-radius: 10px;
     box-shadow: 1px 2px 10px rgba(0,0,0,0.1);
@@ -118,6 +118,17 @@ table tr:hover {
     background: #5a6268;
     color: white;
 }
+
+/* Colores específicos para botones */
+.nav-button.primary { background: #417690; }
+.nav-button.success { background: #28a745; }
+.nav-button.purple { background: #6f42c1; }
+.nav-button.danger { background: #dc3545; }
+
+.nav-button.primary:hover { background: #366477; }
+.nav-button.success:hover { background: #218838; }
+.nav-button.purple:hover { background: #5a36a8; }
+.nav-button.danger:hover { background: #c82333; }
 </style>
 {% endblock %}
 
@@ -125,9 +136,10 @@ table tr:hover {
 <div class="dashboard-container">
     <!-- Botones de navegación -->
     <div class="navigation-buttons">
-        <a href="/admin/" class="nav-button">⬅️ Volver al Admin</a>
-        <a href="/dashboard/" class="nav-button" style="background: #28a745;">📊 Dashboard Principal</a>
-        <a href="/pos/" class="nav-button" style="background: #6f42c1;">🎯 Ir al POS</a>
+        <a href="/admin/" class="nav-button primary">⬅️ Volver al Admin</a>
+        <a href="/dashboard/" class="nav-button success">📊 Dashboard Principal</a>
+        <a href="/pos/" class="nav-button purple">🎯 Ir al POS</a>
+        <a href="/admin/sales-report/" class="nav-button" style="background: #17a2b8;">📈 Reporte de Ventas</a>
     </div>
 
     <h1>📊 Dashboard POS - Sistema de Punto de Venta</h1>
@@ -160,6 +172,24 @@ table tr:hover {
         </div>
     </div>
 
+    <!-- Métricas Adicionales -->
+    <div class="metrics-grid">
+        <div class="metric-card" style="border-left-color: #28a745;">
+            <div class="metric-label">Ventas Efectivo</div>
+            <div class="metric-value" style="color: #28a745;">${{ cash_sales_today|floatformat:2 }}</div>
+        </div>
+
+        <div class="metric-card" style="border-left-color: #6f42c1;">
+            <div class="metric-label">Ventas Tarjeta</div>
+            <div class="metric-value" style="color: #6f42c1;">${{ card_sales_today|floatformat:2 }}</div>
+        </div>
+
+        <div class="metric-card" style="border-left-color: #fd7e14;">
+            <div class="metric-label">Ventas Semana</div>
+            <div class="metric-value" style="color: #fd7e14;">${{ week_sales|floatformat:2 }}</div>
+        </div>
+    </div>
+
     <!-- Productos Más Vendidos -->
     <div class="data-section">
         <h3>🏆 Productos Más Vendidos</h3>
@@ -169,6 +199,7 @@ table tr:hover {
                 <tr>
                     <th>Producto</th>
                     <th>Cantidad Vendida</th>
+                    <th>Total Recaudado</th>
                 </tr>
             </thead>
             <tbody>
@@ -176,6 +207,7 @@ table tr:hover {
                 <tr>
                     <td>{{ product.product_name }}</td>
                     <td>{{ product.total_sold }} unidades</td>
+                    <td>${{ product.total_revenue|floatformat:2 }}</td>
                 </tr>
                 {% endfor %}
             </tbody>
@@ -194,6 +226,7 @@ table tr:hover {
                 <tr>
                     <th>Usuario</th>
                     <th>Hora Apertura</th>
+                    <th>Fondo Inicial</th>
                     <th>Estado</th>
                 </tr>
             </thead>
@@ -202,6 +235,7 @@ table tr:hover {
                 <tr>
                     <td>{{ session.user.username }}</td>
                     <td>{{ session.start_time|time:"H:i" }}</td>
+                    <td>${{ session.starting_balance|floatformat:2 }}</td>
                     <td>
                         {% if session.end_time %}
                             <span style="color: gray;">🔴 Cerrada</span>
@@ -229,6 +263,7 @@ table tr:hover {
                     <th>Vendedor</th>
                     <th>Total</th>
                     <th>Método</th>
+                    <th>Cliente</th>
                     <th>Fecha</th>
                 </tr>
             </thead>
@@ -245,6 +280,13 @@ table tr:hover {
                             💳 Tarjeta
                         {% endif %}
                     </td>
+                    <td>
+                        {% if sale.customer %}
+                            {{ sale.customer.name }}
+                        {% else %}
+                            -
+                        {% endif %}
+                    </td>
                     <td>{{ sale.created_at|time:"H:i" }}</td>
                 </tr>
                 {% endfor %}
@@ -255,6 +297,39 @@ table tr:hover {
         {% endif %}
     </div>
 
+    <!-- Alertas de Stock -->
+    <div class="data-section">
+        <h3>⚠️ Alertas de Inventario</h3>
+
+        {% if out_of_stock_products %}
+        <div style="background: #f8d7da; padding: 15px; border-radius: 5px; margin-bottom: 15px;">
+            <h4 style="color: #721c24; margin-top: 0;">❌ Productos Sin Stock</h4>
+            <ul>
+                {% for product in out_of_stock_products %}
+                <li><strong>{{ product.name }}</strong> (SKU: {{ product.sku }})</li>
+                {% endfor %}
+            </ul>
+        </div>
+        {% endif %}
+
+        {% if low_stock_products %}
+        <div style="background: #fff3cd; padding: 15px; border-radius: 5px;">
+            <h4 style="color: #856404; margin-top: 0;">🟡 Productos con Stock Bajo</h4>
+            <ul>
+                {% for product in low_stock_products %}
+                <li><strong>{{ product.name }}</strong> - Solo {{ product.stock }} unidades restantes</li>
+                {% endfor %}
+            </ul>
+        </div>
+        {% endif %}
+
+        {% if not out_of_stock_products and not low_stock_products %}
+        <p style="color: #155724; background: #d4edda; padding: 15px; border-radius: 5px;">
+            ✅ Todo el inventario está en niveles normales.
+        </p>
+        {% endif %}
+    </div>
+
     <!-- Enlaces Rápidos -->
     <div class="data-section">
         <h3>🔗 Acciones Rápidas</h3>
@@ -262,8 +337,10 @@ table tr:hover {
             <a href="/admin/pos/product/" class="action-button">📦 Gestionar Productos</a>
             <a href="/admin/pos/sale/" class="action-button">💰 Ver Ventas</a>
             <a href="/admin/pos/cashdrawersession/" class="action-button">🏦 Sesiones de Caja</a>
+            <a href="/admin/pos/customer/" class="action-button">👥 Gestionar Clientes</a>
             <a href="/admin/pos/category/" class="action-button">📂 Categorías</a>
             <a href="/admin/pos/supplier/" class="action-button">🏢 Proveedores</a>
+            <a href="/admin/sales-report/" class="action-button" style="background: #17a2b8;">📈 Reporte de Ventas</a>
         </div>
     </div>
 </div>

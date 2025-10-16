@@ -99,6 +99,48 @@
             padding: 40px;
             color: #6c757d;
         }
+
+        /* ========== ESTILOS NUEVOS PARA EXPORTACIÓN ========== */
+        .export-section {
+            background: #28a745;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 20px 0;
+            text-align: center;
+        }
+        .export-buttons {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+        .export-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 12px 20px;
+            color: white;
+            text-decoration: none;
+            border-radius: 6px;
+            font-size: 14px;
+            font-weight: bold;
+            border: none;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        .export-btn.excel {
+            background: #217346;
+        }
+        .export-btn.excel:hover {
+            background: #1e663e;
+        }
+        .export-btn.pdf {
+            background: #dc3545;
+        }
+        .export-btn.pdf:hover {
+            background: #c82333;
+        }
+        /* ========== FIN ESTILOS EXPORTACIÓN ========== */
     </style>
 </head>
 <body>
@@ -154,6 +196,35 @@
             <p><strong>Ticket Promedio:</strong> ${{ total_sales|floatformat:2 }}</p>
         </div>
         {% endif %}
+
+        <!-- ========== SECCIÓN DE EXPORTACIÓN ========== -->
+        {% if sales and start_date and end_date %}
+        <div class="export-section">
+            <h3 style="color: white; margin-top: 0;">📤 Exportar Reporte</h3>
+            <p style="color: white; margin-bottom: 15px;">Descarga el reporte en los siguientes formatos:</p>
+
+            <div class="export-buttons">
+                <form method="post" style="display: inline;">
+                    {% csrf_token %}
+                    <input type="hidden" name="start_date" value="{{ start_date|date:'Y-m-d' }}">
+                    <input type="hidden" name="end_date" value="{{ end_date|date:'Y-m-d' }}">
+                    <button type="submit" name="export_excel" class="export-btn excel">
+                        📊 Exportar a Excel
+                    </button>
+                </form>
+
+                <form method="post" style="display: inline;">
+                    {% csrf_token %}
+                    <input type="hidden" name="start_date" value="{{ start_date|date:'Y-m-d' }}">
+                    <input type="hidden" name="end_date" value="{{ end_date|date:'Y-m-d' }}">
+                    <button type="submit" name="export_pdf" class="export-btn pdf">
+                        📄 Exportar a PDF
+                    </button>
+                </form>
+            </div>
+        </div>
+        {% endif %}
+        <!-- ========== FIN SECCIÓN EXPORTACIÓN ========== -->
 
         <!-- Tabla de Ventas -->
         {% if sales %}

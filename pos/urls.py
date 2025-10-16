@@ -11,4 +11,8 @@ urlpatterns = [
     path('dashboard/', views.admin_dashboard, name='admin_dashboard'),  # ← Esta es importante
     path('reports/sales/', views.sales_report_view, name='sales_report'),
     path('logout/', views.custom_logout_view, name='logout'),
+    path('pos/search-customers/', views.search_customers_view, name='search_customers'),
+    path('returns/', views.returns_main_view, name='returns_main'),
+    path('returns/search-sale/', views.search_sale_for_return_view, name='search_sale_return'),
+    path('returns/process/', views.process_return_view, name='process_return'),
 ]
